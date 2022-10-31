@@ -20,7 +20,7 @@
 int SetDockIconBadge (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 int CreateToolbar (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 int CreateToolbarItem (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
-int MakeSheet (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
+int BeginSheet (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 int EndSheet (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 int Idared_Init (Tcl_Interp *interp);
 int Idared_SafeInit (Tcl_Interp *interp);
