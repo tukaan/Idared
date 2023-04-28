@@ -6,11 +6,13 @@
 #import <tkInt.h>
 #import <tkMacOSXInt.h>
 #import <Cocoa/Cocoa.h>
+#import <Quartz/Quartz.h>
 
 
 static Tcl_Interp *tclInterp;
 
 NSMutableArray *toolbarItems;
+NSMutableArray *panelItems;
 
 
 @implementation DockIcon
@@ -62,7 +64,7 @@ NSMutableArray *toolbarItems;
   return toolbarItem;
 }
 
--(NSArray *)toolbarAllowedItemIdentifiers: (NSToolbar*)toolbar {
+- (NSArray *)toolbarAllowedItemIdentifiers: (NSToolbar*)toolbar {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSMutableArray *allowedItems = [[NSMutableArray alloc] init];
 
@@ -115,6 +117,52 @@ NSMutableArray *toolbarItems;
 
   [pool release];
   return YES;
+}
+
+@end
+
+
+@implementation QLView
+- (id)init {
+  self = [super init];
+  previewPanel = [QLPreviewPanel sharedPreviewPanel];
+
+  NSResponder *currentResponder = [NSApplication sharedApplication];
+  [self setNextResponder:[currentResponder nextResponder]];
+  [currentResponder setNextResponder:self];
+
+  [previewPanel makeKeyAndOrderFront:nil];
+
+  return self;
+}
+
+- (BOOL)acceptsPreviewPanelControl:(QLPreviewPanel *)panel {
+  return YES;
+}
+
+- (BOOL)acceptsFirstResponder {
+  return YES;
+}
+
+- (void)beginPreviewPanelControl:(QLPreviewPanel *)panel {
+
+  previewPanel = [panel retain];
+  panel.delegate = self;
+  panel.dataSource = self;
+}
+
+- (void)endPreviewPanelControl:(QLPreviewPanel *)panel {
+  [previewPanel release];
+  previewPanel = nil;
+}
+
+- (NSInteger)numberOfPreviewItemsInPreviewPanel:(QLPreviewPanel *)panel {
+  return [panelItems count];
+}
+
+- (id <QLPreviewItem>)previewPanel:(QLPreviewPanel *)panel previewItemAtIndex:(NSInteger)index {
+
+  return [panelItems objectAtIndex:0];
 }
 
 @end
@@ -266,6 +314,25 @@ int EndSheet (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONS
 }
 
 
+int CreateQuicklookPanel(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]) {
+  if(objc != 2) {
+    Tcl_WrongNumArgs(interp, 1, objv, "path?");
+    return TCL_ERROR;
+  }
+
+  panelItems =  nil;
+  panelItems = [[NSMutableArray alloc] init];
+
+  NSString *pathstring = [NSString stringWithUTF8String:Tcl_GetString(objv[1])];
+  NSURL *filepath = [NSURL fileURLWithPath:pathstring];
+
+  [panelItems addObject:filepath];
+  QLView *quicklookPanel = [[QLView alloc] init];
+ 
+  return TCL_OK;
+}
+
+
 int Idared_Init (Tcl_Interp *interp) {
   if (Tcl_InitStubs(interp, "8.6", 0) == NULL) {
     return TCL_ERROR;
@@ -279,6 +346,7 @@ int Idared_Init (Tcl_Interp *interp) {
   Tcl_CreateObjCommand(interp, "Idared::create_toolbaritem", CreateToolbarItem, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
   Tcl_CreateObjCommand(interp, "Idared::begin_sheet", BeginSheet, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
   Tcl_CreateObjCommand(interp, "Idared::end_sheet", EndSheet, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+  Tcl_CreateObjCommand(interp, "Idared::quicklook", CreateQuicklookPanel, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
   toolbarItems = [[NSMutableArray alloc] init];
   tclInterp = interp;
