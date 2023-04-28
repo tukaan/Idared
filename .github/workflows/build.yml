@@ -1,0 +1,19 @@
+
+name: Build
+
+on:
+  push:
+    branches:
+      master
+
+jobs:
+  build_mac:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Make and log
+      run: |
+          make
+          ls
